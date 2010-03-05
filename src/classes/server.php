@@ -70,6 +70,11 @@ class Server
     protected $lastFriendListUpdate;
 
     /**
+     * @var array
+     */
+    protected $listeners = null;
+
+    /**
      * Construct Twitter IRC server
      *
      * Provide a logger and an IRC server implementation.
@@ -86,6 +91,12 @@ class Server
         $this->users     = array();
 
         $this->registerCallbacks();
+        $this->registerListeners();
+    }
+
+    protected function registerListeners()
+    {
+        $this->listeners["onUpdates"][] = new Listeners\Dbus();
     }
 
     /**
@@ -136,6 +147,8 @@ class Server
         foreach ( $this->users as $user )
         {
             $messages = $user->client->getUpdates();
+
+            $this->dispatchEvent('onUpdates', array($messages, $user));
 
             foreach ( $messages as $message )
             {
@@ -666,6 +679,23 @@ class Server
         else
         {
             $this->ircServer->sendServerMessage( $user, "332 {$user->nick} $channel :$topic" );
+        }
+    }
+
+    /**
+     * Dispatch an event with the given arguments.
+     * 
+     * @param string $eventName
+     * @param array $args
+     */
+    protected function dispatchEvent($eventName, array $args)
+    {
+        if ( isset( $this->listeners[$eventName] ) )
+        {
+            foreach ( $this->listeners[$eventName] AS $instance )
+            {
+                call_user_func_array(array($instance, $eventName), $args);
+            }
         }
     }
 }

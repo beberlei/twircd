@@ -43,3 +43,5 @@ require __DIR__ . '/classes/mapper/ident.php';
 require __DIR__ . '/classes/exception.php';
 require __DIR__ . '/classes/server.php';
 
+require __DIR__ . '/classes/listeners/dbus.php';
+
